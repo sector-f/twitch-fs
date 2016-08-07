@@ -12,7 +12,6 @@ struct RedditFileSystem;
 
 impl Filesystem for RedditFileSystem {
     fn getattr(&mut self, _req: &Request, ino: u64, reply: ReplyAttr) {
-        println!("getattr(ino={})", ino);
         let ts = Timespec::new(0, 0);
         let attr = FileAttr {
             ino: 1,
@@ -37,6 +36,19 @@ impl Filesystem for RedditFileSystem {
         } else {
             reply.error(ENOSYS);
         }   
+    }
+    
+    fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: u64, mut reply: ReplyDirectory) {
+        if ino == 1 {
+            if offset == 0 {
+                reply.add(1, 0, FileType::Directory, &Path::new("."));
+                reply.add(1, 1, FileType::Directory, &Path::new(".."));
+            }
+
+            reply.ok();
+        } else {
+            reply.error(ENOSYS)
+        }
     }
 }
 
