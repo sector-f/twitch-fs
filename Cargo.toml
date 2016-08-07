@@ -1,0 +1,6 @@
+[package]
+name = "reddit-fs"
+version = "0.1.0"
+authors = ["matt"]
+
+[dependencies]
