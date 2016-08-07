@@ -5,3 +5,5 @@ authors = ["matt"]
 
 [dependencies]
 fuse="*"
+time="*"
+libc="*"
