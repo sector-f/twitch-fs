@@ -7,3 +7,5 @@ authors = ["matt"]
 fuse="*"
 time="*"
 libc="*"
+hyper="*"
+rustc-serialize="*"
