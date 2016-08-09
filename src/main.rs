@@ -135,10 +135,18 @@ impl Filesystem for TwitchFileSystem {
     }
 }
 
+fn is_valid_dir(mountpoint: String) -> Result<(), String> {
+    match Path::new(&mountpoint).is_dir() {
+        true => Ok(()),
+        false => Err("Mountpoint must be a directory".to_string()),
+    }
+}
+
 fn main() {
     let matches = App::new("twitch-fs")
         .version(option_env!("CARGO_PKG_VERSION").unwrap_or("unknown version"))
         .arg(Arg::with_name("mountpoint")
+             .validator(is_valid_dir)
              .index(1)
              .required(true))
         .get_matches();
