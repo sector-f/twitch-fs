@@ -63,7 +63,7 @@ impl TwitchFileSystem {
                         mtime: ts,
                         ctime: ts,
                         crtime: ts,
-                        kind: FileType::RegularFile,
+                        kind: FileType::Directory,
                         perm: 0o644,
                         nlink: 0,
                         uid: 0,
@@ -124,6 +124,8 @@ impl Filesystem for TwitchFileSystem {
             }
             reply.add(1, 0, FileType::Directory, &Path::new("."));
             reply.add(1, 1, FileType::Directory, &Path::new(".."));
+        } else if offset == 1 {
+            reply.add(1, 0, FileType::Directory, &Path::new("u wot m8"));
         }
 
         reply.ok();
