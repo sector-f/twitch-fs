@@ -13,9 +13,9 @@ use fuse::{FileAttr, FileType, Filesystem, Request, ReplyAttr, ReplyData, ReplyE
 use hyper::client::{Client, Response};
 use rustc_serialize::json::Json;
 
-struct RedditFileSystem;
+struct TwitchFileSystem;
 
-impl Filesystem for RedditFileSystem {
+impl Filesystem for TwitchFileSystem {
     fn getattr(&mut self, _req: &Request, ino: u64, reply: ReplyAttr) {
         let ts = Timespec::new(0, 0);
         let attr = FileAttr {
@@ -46,18 +46,11 @@ impl Filesystem for RedditFileSystem {
     fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: u64, mut reply: ReplyDirectory) {
         if ino == 1 {
             if offset == 0 {
-                let subreddit = match env::args().nth(2) {
-                    Some(subreddit) => subreddit,
-                    None => "all".to_string()
-                };
-
-                let url = format!("https://www.reddit.com/r/{}.json", subreddit);
-                println!("{}", url);
                 let mut body = String::new();
                 Client::new()
-                    .get(&url)
+                    .get("https://api.twitch.tv/kraken/games/top")
                     .send()
-                    .expect("Couldn't load reddit")
+                    .expect("Couldn't load twitch")
                     .read_to_string(&mut body);
 
                 println!("{}", body);
@@ -81,5 +74,5 @@ fn main() {
             return;
         }
     };
-    fuse::mount(RedditFileSystem, &mountpoint, &[])
+    fuse::mount(TwitchFileSystem, &mountpoint, &[])
 }
