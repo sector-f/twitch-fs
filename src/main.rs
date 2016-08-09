@@ -44,25 +44,36 @@ impl Filesystem for TwitchFileSystem {
     }
     
     fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: u64, mut reply: ReplyDirectory) {
-        if ino == 1 {
-            if offset == 0 {
-                let mut body = String::new();
-                Client::new()
-                    .get("https://api.twitch.tv/kraken/games/top")
-                    .send()
-                    .expect("Couldn't load twitch")
-                    .read_to_string(&mut body);
+        if offset == 0 {
+            let mut body = String::new();
+            Client::new()
+                .get("https://api.twitch.tv/kraken/games/top")
+                .send()
+                .expect("Couldn't load twitch")
+                .read_to_string(&mut body);
 
-                println!("{}", body);
-
-                reply.add(1, 0, FileType::Directory, &Path::new("."));
-                reply.add(1, 1, FileType::Directory, &Path::new(".."));
+            match Json::from_str(&body) {
+                Ok(data) => {
+                    let games = data.find("top").unwrap().as_array().unwrap();
+                    for (i, game) in games.iter().enumerate() {
+                        let name = game
+                            .find_path(&["game", "name"])
+                            .unwrap()
+                            .as_string()
+                            .unwrap();
+                        reply.add(1, 1 + 1 as u64, 
+                                  FileType::Directory,
+                                  &Path::new(name));
+                    }
+                },
+                Err(_) => println!("Twitch returned invalid json")
             }
-            
-            reply.ok();
-        } else {
-            reply.error(ENOSYS)
+
+            reply.add(1, 0, FileType::Directory, &Path::new("."));
+            reply.add(1, 1, FileType::Directory, &Path::new(".."));
         }
+
+        reply.ok();
     }
 }
 
