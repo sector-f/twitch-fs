@@ -98,6 +98,23 @@ impl Filesystem for TwitchFileSystem {
         }
     }
 
+    fn lookup(&mut self, _req: &Request, parent: u64, name: &Path, reply: ReplyEntry) {
+        let inode = match self.inodes.get(name.to_str().unwrap()) {
+            Some(inode) => inode,
+            None => {
+                reply.error(ENOENT);
+                return;
+            }
+        };
+        match self.attrs.get(inode) {
+            Some(attr) => {
+                let ttl = Timespec::new(1, 0);
+                reply.entry(&ttl, attr, 0);
+            },
+            None => reply.error(ENOENT),
+        };
+    }
+
     fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: u64, mut reply: ReplyDirectory) {
         if offset == 0 {
             for (game, &inode) in &self.inodes {
