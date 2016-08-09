@@ -100,11 +100,13 @@ impl Filesystem for TwitchFileSystem {
 
     fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: u64, mut reply: ReplyDirectory) {
         if offset == 0 {
-
-
+            for (game, &inode) in &self.inodes {
+                if inode == 1 { continue; }
+                let offset = inode;
+                reply.add(inode, offset, FileType::RegularFile, &Path::new(game));
+            }
             reply.add(1, 0, FileType::Directory, &Path::new("."));
             reply.add(1, 1, FileType::Directory, &Path::new(".."));
-            reply.add(1, 29, FileType::RegularFile, &Path::new("test"));
         }
 
         reply.ok();
