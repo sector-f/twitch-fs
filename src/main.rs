@@ -3,6 +3,7 @@ extern crate libc;
 extern crate time;
 extern crate hyper;
 extern crate rustc_serialize;
+extern crate clap;
 
 use std::path::Path;
 use std::env;
@@ -12,6 +13,7 @@ use time::Timespec;
 use fuse::{FileAttr, FileType, Filesystem, Request, ReplyAttr, ReplyData, ReplyEntry, ReplyDirectory};
 use hyper::client::{Client, Response};
 use rustc_serialize::json::Json;
+use clap::{App, Arg};
 
 struct TwitchFileSystem;
 
@@ -40,9 +42,9 @@ impl Filesystem for TwitchFileSystem {
             reply.attr(&ttl, &attr);
         } else {
             reply.error(ENOSYS);
-        }   
+        }
     }
-    
+
     fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: u64, mut reply: ReplyDirectory) {
         if offset == 0 {
             let mut body = String::new();
@@ -61,7 +63,7 @@ impl Filesystem for TwitchFileSystem {
                             .unwrap()
                             .as_string()
                             .unwrap();
-                        reply.add(1, 1 + 1 as u64, 
+                        reply.add(1, 1 + 1 as u64,
                                   FileType::Directory,
                                   &Path::new(name));
                     }
@@ -78,12 +80,15 @@ impl Filesystem for TwitchFileSystem {
 }
 
 fn main() {
-    let mountpoint = match env::args().nth(1) {
-        Some(path) => path,
-        None => {
-            println!("Usage: {} <Mountpoint>", env::args().nth(0).unwrap());
-            return;
-        }
-    };
+    let matches = App::new("twitch-fs")
+        .version(option_env!("CARGO_PKG_VERSION").unwrap_or("unknown version"))
+        .arg(Arg::with_name("mountpoint")
+             .index(1)
+             .required(true))
+        .get_matches();
+
+    // unwrap() is safe here because the argument is set as required
+    let mountpoint = matches.value_of_os("mountpoint").unwrap();
+
     fuse::mount(TwitchFileSystem, &mountpoint, &[])
 }
